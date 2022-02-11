@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  emails-queue-service
+
+Transform:
+  - AWS::Serverless-2016-10-31
+
+Parameters:
+  AccountId:
+    Type: String
+    Description: AWS account ID
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - prod
+      - test
+    Description: Environment for deploy
+
+Mappings:
+  EnvironmentMap:
+    prod:
+      project: sms-queue-service
+    test:
+      project: sms-queue-service-test
+
+Resources:
+  SimpleQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      FifoQueue: true
+      KmsMasterKeyId: alias/aws/sqs
+      MessageRetentionPeriod: 1209600 # 14 days
+      VisibilityTimeout: 60
+
+  SQSPayloadProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Processes queued messages to send sms messages.
+      Runtime: nodejs14.x
+      Architectures:
+        - x86_64
+      Handler: handlers/sqs-payload-processor.sqsPayloadProcessorHandler
+      CodeUri: './dist'
+      Environment:
+        Variables:
+          PROJECT_ID: !Ref PinpointApplication
+          SMS_FROM: '+18449163034'
+          SMS_REGION: us-east-1
+      Events:
+        SQSQueueEvent:
+          Type: SQS
+          Properties:
+            BatchSize: 7
+            Queue: !GetAtt SimpleQueue.Arn
+      MemorySize: 128
+      Timeout: 60
+      Policies:
+        # Give Lambda basic execution Permission
+        - AWSLambdaBasicExecutionRole
+        # Grant access to SQS queue
+        - SQSPollerPolicy:
+            QueueName: !GetAtt SimpleQueue.QueueName
+        # Access to send messages thru Pinpoint
+        - Version: 2012-10-17
+          Statement:
+            - Action:
+                - 'mobiletargeting:Send*'
+              Effect: Allow
+              Resource: !Sub
+                - 'arn:aws:mobiletargeting:us-east-1:${AccountId}:apps/${ProjectId}/messages'
+                - ProjectId: !Ref PinpointApplication
+
+  PinpointApplication:
+    Type: AWS::Pinpoint::App
+    Properties:
+      Name: !FindInMap [EnvironmentMap, !Ref Environment, project]
+
+  PinpointSms:
+    Type: AWS::Pinpoint::SMSChannel
+    Properties:
+      ApplicationId: !Ref PinpointApplication
+      Enabled: true
+
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    DependsOn: [SQSPayloadProcessor]
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${SQSPayloadProcessor}
+      RetentionInDays: 30

@@ -1,0 +1,60 @@
+{
+  "name": "sms-queue-service",
+  "author": "David Bowland",
+  "description": "Sends SMS messages queued in SQS",
+  "version": "1.0.0",
+  "engines": {
+    "node": "^14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davidbowland/sms-queue-service.git"
+  },
+  "bugs": {
+    "url": "https://github.com/davidbowland/sms-queue-service/issues"
+  },
+  "homepage": "https://github.com/davidbowland/sms-queue-service#readme",
+  "dependencies": {
+    "aws-sdk": "^2.1046.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.16.5",
+    "@babel/preset-env": "^7.16.5",
+    "@babel/preset-typescript": "^7.16.5",
+    "@types/aws-lambda": "^8.10.88",
+    "@types/escape-html": "^1.0.1",
+    "@types/jest": "^27.0.3",
+    "@typescript-eslint/eslint-plugin": "^5.7.0",
+    "@typescript-eslint/parser": "^5.7.0",
+    "babel-jest": "^27.4.5",
+    "eslint": "^8.5.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-jest": "^25.3.0",
+    "husky": "^7.0.4",
+    "jest": "^27.4.5",
+    "lint-staged": "^12.1.3",
+    "prettier": "^2.5.1",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.4"
+  },
+  "scripts": {
+    "build": "npm run clean && tsc && cp package*.json dist/ && cd dist/ && HUSKY=0 NODE_ENV=production npm ci",
+    "clean": "rm -rf dist coverage && NODE_ENV=test npm ci",
+    "deploy": "npm run build && ./scripts/deploy.sh",
+    "lint": "prettier --write . && eslint --fix . --resolve-plugins-relative-to .",
+    "prepare": "if [ \"$HUSKY\" != \"0\" ]; then husky install ; fi",
+    "start": "npm run build && npm run quick-start",
+    "quick-start": "tsc && HUSKY=0 sam build && PROJECT_ID=94738af1ea7640c185df5dcc903aac27 SMS_FROM='+18449163034' SMS_REGION=us-east-1 sam local invoke --event events/event-sqs.json",
+    "test": "npm run lint && jest --colors"
+  },
+  "lint-staged": {
+    "**/*.{js,jsx,ts,tsx}": [
+      "prettier --write --ignore-unknown",
+      "eslint --resolve-plugins-relative-to . --fix",
+      "jest --colors --findRelatedTests --coverageThreshold '{}'"
+    ],
+    "**/*": [
+      "prettier --write --ignore-unknown"
+    ]
+  }
+}
