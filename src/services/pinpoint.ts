@@ -16,7 +16,7 @@ export const sendSms = (to: string, message: string, messageType?: MessageType) 
         },
         MessageConfiguration: {
           SMSMessage: {
-            Body: message,
+            Body: `${message} Reply STOP to opt out.`,
             MessageType: messageType ?? 'TRANSACTIONAL',
             OriginationNumber: smsFrom,
           },

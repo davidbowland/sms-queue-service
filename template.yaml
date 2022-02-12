@@ -28,6 +28,7 @@ Resources:
   SimpleQueue:
     Type: AWS::SQS::Queue
     Properties:
+      ContentBasedDeduplication: true
       FifoQueue: true
       KmsMasterKeyId: alias/aws/sqs
       MessageRetentionPeriod: 1209600 # 14 days
