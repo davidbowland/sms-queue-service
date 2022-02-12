@@ -7,11 +7,12 @@ import { getDataFromRecord } from '../utils/message-processing'
 
 export const processSingleMessage = async (record: SQSRecord): Promise<void> => {
   const data = await getDataFromRecord(record)
+  log('Sending SMS', { ...data, to: data.to.replace(/\d{3}(\d{4})$/, 'XXX$1') })
   await sendSms(data.to, data.contents, data.messageType)
 }
 
 export const sqsPayloadProcessorHandler: SQSHandler = async (event: SQSEvent): Promise<void> => {
-  log('Received payload', event)
+  log('Received payload', { ...event, body: undefined })
   for (const record of event.Records) {
     try {
       await exports.processSingleMessage(record)
