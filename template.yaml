@@ -1,14 +1,11 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  emails-queue-service
+  Queue and lambda for sending SMS messages
 
 Transform:
   - AWS::Serverless-2016-10-31
 
 Parameters:
-  AccountId:
-    Type: String
-    Description: AWS account ID
   Environment:
     Type: String
     Default: prod
@@ -69,7 +66,7 @@ Resources:
                 - 'mobiletargeting:Send*'
               Effect: Allow
               Resource: !Sub
-                - 'arn:aws:mobiletargeting:us-east-1:${AccountId}:apps/${ProjectId}/messages'
+                - 'arn:aws:mobiletargeting:us-east-1:${AWS::AccountId}:apps/${ProjectId}/messages'
                 - ProjectId: !Ref PinpointApplication
 
   PinpointApplication:
