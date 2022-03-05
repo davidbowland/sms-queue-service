@@ -22,7 +22,7 @@ describe('Pinpoint', () => {
           },
           MessageConfiguration: {
             SMSMessage: {
-              Body: 'Hello, world! Reply STOP to opt out.',
+              Body: 'Hello, world!\n\nReply STOP to opt out.',
               MessageType: 'TRANSACTIONAL',
               OriginationNumber: '+12345678901',
             },
@@ -43,7 +43,7 @@ describe('Pinpoint', () => {
           },
           MessageConfiguration: {
             SMSMessage: {
-              Body: 'Hello, world! Reply STOP to opt out.',
+              Body: 'Hello, world!\n\nReply STOP to opt out.',
               MessageType: 'PROMOTIONAL',
               OriginationNumber: '+12345678901',
             },
