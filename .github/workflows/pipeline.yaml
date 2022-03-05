@@ -85,7 +85,7 @@ jobs:
             --s3-prefix sms-queue-service-test \
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE} \
-            --parameter-overrides 'AccountId=${{ secrets.AWS_ACCOUNT_ID }} Environment=test'
+            --parameter-overrides 'Environment=test'
 
   build-and-package:
     name: Build and package lambda
@@ -194,7 +194,7 @@ jobs:
             --s3-prefix sms-queue-service-test \
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE} \
-            --parameter-overrides 'AccountId=${{ secrets.AWS_ACCOUNT_ID }} Environment=test'
+            --parameter-overrides 'Environment=test'
 
   deploy-prod:
     name: Deploy to production
@@ -230,8 +230,7 @@ jobs:
             --s3-bucket ${PROD_ARTIFACTS_BUCKET} \
             --s3-prefix sms-queue-service \
             --no-fail-on-empty-changeset \
-            --role-arn ${PROD_CLOUDFORMATION_EXECUTION_ROLE} \
-            --parameter-overrides 'AccountId=${{ secrets.AWS_ACCOUNT_ID }}'
+            --role-arn ${PROD_CLOUDFORMATION_EXECUTION_ROLE}
 
   bump:
     name: Bump the version number and tag the commit
