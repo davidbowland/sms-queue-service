@@ -15,7 +15,7 @@ jest.mock('@utils/message-processing')
 describe('sqs-payload-processor', () => {
   beforeAll(() => {
     mocked(logging).log.mockReturnValue(undefined)
-    mocked(messageProcessing).getDataFromRecord.mockResolvedValue(smsMessage)
+    mocked(messageProcessing).getDataFromRecord.mockReturnValue(smsMessage)
   })
 
   describe('sqsPayloadProcessorHandler', () => {

@@ -1,13 +1,13 @@
 import { sendSms } from '../services/pinpoint'
 import { SQSEvent, SQSHandler, SQSRecord } from '../types'
 import { log, logError } from '../utils/logging'
-import { getDataFromRecord } from '../utils/message-processing'
+import { getDataFromRecord, obscurePhoneNumber } from '../utils/message-processing'
 
 /* Queue processing */
 
 export const processSingleMessage = async (record: SQSRecord): Promise<void> => {
-  const data = await getDataFromRecord(record)
-  log('Sending SMS', { ...data, to: data.to.replace(/\d{3}(\d{4})$/, 'XXX$1') })
+  const data = getDataFromRecord(record)
+  log('Sending SMS', { ...data, to: obscurePhoneNumber(data.to) })
   await sendSms(data.to, data.contents, data.messageType)
 }
 
