@@ -1,5 +1,5 @@
-import { smsMessage } from '../__mocks__'
 import { sendSms } from '@services/pinpoint'
+import { smsMessage } from '../__mocks__'
 
 const mockSendMessages = jest.fn()
 jest.mock('aws-sdk', () => ({

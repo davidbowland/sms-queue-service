@@ -14,7 +14,7 @@
     "prepare": "if [ \"$HUSKY\" != \"0\" ]; then husky install ; fi",
     "start": "npm run build && npm run quick-start",
     "quick-start": "tsc && HUSKY=0 sam build && PROJECT_ID=94738af1ea7640c185df5dcc903aac27 SMS_FROM='+18449163034' SMS_REGION=us-east-1 sam local invoke --event events/event-sqs.json",
-    "test": "npm run lint && jest --colors"
+    "test": "jest --colors"
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [

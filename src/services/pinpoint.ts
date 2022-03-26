@@ -1,4 +1,5 @@
 import { Pinpoint } from 'aws-sdk'
+
 import { projectId, smsFrom, smsRegion } from '../config'
 import { MessageType } from '../types'
 

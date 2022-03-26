@@ -1,12 +1,12 @@
 import { mocked } from 'jest-mock'
 
-import { smsMessage } from '../__mocks__'
-import eventJson from '@events/event-sqs.json'
-import { sqsPayloadProcessorHandler } from '@handlers/sqs-payload-processor'
-import * as pinpoint from '@services/pinpoint'
-import { SQSEvent } from '@types'
 import * as logging from '@utils/logging'
 import * as messageProcessing from '@utils/message-processing'
+import * as pinpoint from '@services/pinpoint'
+import { SQSEvent } from '@types'
+import eventJson from '@events/event-sqs.json'
+import { smsMessage } from '../__mocks__'
+import { sqsPayloadProcessorHandler } from '@handlers/sqs-payload-processor'
 
 jest.mock('@services/pinpoint')
 jest.mock('@utils/logging')

@@ -35,10 +35,12 @@ jobs:
           node-version: 14.x
       - name: Install NPM 8
         run: npm install -g npm@8
-      - name: Install packages and run tests
-        run: npm ci && npm run test
+      - name: Install and audit packages
+        run: npm ci && npm audit --audit-level=high
         env:
           NODE_ENV: test
+      - name: Run tests
+        run: npm run test
 
   build-and-deploy-feature:
     name: Deploy feature branch

@@ -1,5 +1,5 @@
-import { record } from '../__mocks__'
 import { getDataFromRecord, obscurePhoneNumber } from '@utils/message-processing'
+import { record } from '../__mocks__'
 
 describe('message-processing', () => {
   describe('getDataFromRecord', () => {
