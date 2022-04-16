@@ -29,6 +29,13 @@ Resources:
       FifoQueue: true
       KmsMasterKeyId: alias/aws/sqs
       MessageRetentionPeriod: 1209600 # 14 days
+      Tags:
+        - Key: 'created-by'
+          Value: 'sms-queue-service'
+        - Key: 'created-for'
+          Value: 'dbowland'
+        - Key: 'environment'
+          Value: !Ref Environment
       VisibilityTimeout: 60
 
   SQSPayloadProcessor:
@@ -68,11 +75,19 @@ Resources:
               Resource: !Sub
                 - 'arn:aws:mobiletargeting:us-east-1:${AWS::AccountId}:apps/${ProjectId}/messages'
                 - ProjectId: !Ref PinpointApplication
+      Tags:
+        'created-by': 'sms-queue-service'
+        'created-for': 'dbowland'
+        'environment': !Ref Environment
 
   PinpointApplication:
     Type: AWS::Pinpoint::App
     Properties:
       Name: !FindInMap [EnvironmentMap, !Ref Environment, project]
+      Tags:
+        'created-by': 'sms-queue-service'
+        'created-for': 'dbowland'
+        'environment': !Ref Environment
 
   PinpointSms:
     Type: AWS::Pinpoint::SMSChannel
@@ -86,3 +101,10 @@ Resources:
     Properties:
       LogGroupName: !Sub /aws/lambda/${SQSPayloadProcessor}
       RetentionInDays: 30
+      Tags:
+        - Key: 'created-by'
+          Value: 'sms-queue-service'
+        - Key: 'created-for'
+          Value: 'dbowland'
+        - Key: 'environment'
+          Value: !Ref Environment
