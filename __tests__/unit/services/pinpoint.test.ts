@@ -7,6 +7,9 @@ jest.mock('aws-sdk', () => ({
     sendMessages: (...args) => ({ promise: () => mockSendMessages(...args) }),
   })),
 }))
+jest.mock('@utils/logging', () => ({
+  xrayCapture: jest.fn().mockImplementation((x) => x),
+}))
 
 describe('Pinpoint', () => {
   describe('sendSms', () => {

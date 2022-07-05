@@ -59,7 +59,6 @@ Resources:
             BatchSize: 7
             Queue: !GetAtt SimpleQueue.Arn
       MemorySize: 128
-      Timeout: 60
       Policies:
         # Give Lambda basic execution Permission
         - AWSLambdaBasicExecutionRole
@@ -79,6 +78,8 @@ Resources:
         'created-by': 'sms-queue-service'
         'created-for': 'dbowland'
         'environment': !Ref Environment
+      Timeout: 60
+      Tracing: Active
 
   PinpointApplication:
     Type: AWS::Pinpoint::App

@@ -2,8 +2,9 @@ import { Pinpoint } from 'aws-sdk'
 
 import { projectId, smsFrom, smsRegion } from '../config'
 import { MessageType } from '../types'
+import { xrayCapture } from '../utils/logging'
 
-const pinpoint = new Pinpoint({ apiVersion: '2016-12-01', region: smsRegion })
+const pinpoint = xrayCapture(new Pinpoint({ apiVersion: '2016-12-01', region: smsRegion }))
 
 export const sendSms = (to: string, message: string, messageType?: MessageType) =>
   pinpoint
