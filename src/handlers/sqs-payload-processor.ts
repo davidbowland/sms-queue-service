@@ -1,6 +1,6 @@
-import { SQSEvent, SQSHandler, SQSRecord } from '../types'
 import { getDataFromRecord, obscurePhoneNumber } from '../utils/message-processing'
 import { log, logError } from '../utils/logging'
+import { SQSEvent, SQSHandler, SQSRecord } from '../types'
 import { sendSms } from '../services/pinpoint'
 
 /* Queue processing */
