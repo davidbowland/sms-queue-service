@@ -6,17 +6,9 @@ import { PinpointClient } from '@aws-sdk/client-pinpoint'
 jest.mock('aws-xray-sdk-core')
 
 describe('logging', () => {
-  const consoleError = console.error
-  const consoleLog = console.log
-
   beforeAll(() => {
     console.error = jest.fn()
     console.log = jest.fn()
-  })
-
-  afterAll(() => {
-    console.error = consoleError
-    console.log = consoleLog
   })
 
   describe('log', () => {
