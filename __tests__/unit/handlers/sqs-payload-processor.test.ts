@@ -26,12 +26,14 @@ describe('sqs-payload-processor', () => {
 
     test('expect processSingleMessage to be called for each record', async () => {
       await sqsPayloadProcessorHandler(event, undefined, undefined)
+
       expect(mocked(pinpoint).sendSms).toHaveBeenCalledWith('+15551234567', 'Hello, world!', undefined)
     })
 
     test('expect processSingleMessage to not fail when sendSms fails', async () => {
       mocked(pinpoint).sendSms.mockRejectedValueOnce('fnord')
       await sqsPayloadProcessorHandler(event, undefined, undefined)
+
       expect(mocked(logging).logError).toHaveBeenCalledWith('fnord')
     })
   })

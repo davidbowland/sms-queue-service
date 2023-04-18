@@ -27,7 +27,7 @@
     "update": "ncu -u --doctor && npm audit fix --audit-level=none && npm run test && npm dedupe"
   },
   "dependencies": {
-    "aws-sdk": "^2.1360.0",
+    "@aws-sdk/client-pinpoint": "^3.315.0",
     "aws-xray-sdk-core": "^3.5.0"
   },
   "devDependencies": {

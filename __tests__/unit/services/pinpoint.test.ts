@@ -1,11 +1,12 @@
 import { sendSms } from '@services/pinpoint'
 import { smsMessage } from '../__mocks__'
 
-const mockSendMessages = jest.fn()
-jest.mock('aws-sdk', () => ({
-  Pinpoint: jest.fn(() => ({
-    sendMessages: (...args) => ({ promise: () => mockSendMessages(...args) }),
+const mockSend = jest.fn()
+jest.mock('@aws-sdk/client-pinpoint', () => ({
+  PinpointClient: jest.fn(() => ({
+    send: (...args) => mockSend(...args),
   })),
+  SendMessagesCommand: jest.fn().mockImplementation((x) => x),
 }))
 jest.mock('@utils/logging', () => ({
   xrayCapture: jest.fn().mockImplementation((x) => x),
@@ -15,7 +16,8 @@ describe('Pinpoint', () => {
   describe('sendSms', () => {
     test('expect data passed to sendMessages', async () => {
       await sendSms(smsMessage.to, smsMessage.contents)
-      expect(mockSendMessages).toHaveBeenCalledWith({
+
+      expect(mockSend).toHaveBeenCalledWith({
         ApplicationId: '76rfghjure34567uhg876ug',
         MessageRequest: {
           Addresses: {
@@ -36,7 +38,8 @@ describe('Pinpoint', () => {
 
     test('expect messageType passed to sendMessages', async () => {
       await sendSms(smsMessage.to, smsMessage.contents, 'PROMOTIONAL')
-      expect(mockSendMessages).toHaveBeenCalledWith({
+
+      expect(mockSend).toHaveBeenCalledWith({
         ApplicationId: '76rfghjure34567uhg876ug',
         MessageRequest: {
           Addresses: {
