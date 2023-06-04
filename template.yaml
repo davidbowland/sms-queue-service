@@ -42,7 +42,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Description: Processes queued messages to send sms messages.
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Architectures:
         - x86_64
       Handler: handlers/sqs-payload-processor.sqsPayloadProcessorHandler
