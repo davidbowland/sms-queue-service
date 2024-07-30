@@ -5,7 +5,7 @@ import { sendSms } from '../services/pinpoint'
 
 /* Queue processing */
 
-export const processSingleMessage = async (record: SQSRecord): Promise<void> => {
+const processSingleMessage = async (record: SQSRecord): Promise<void> => {
   const data = getDataFromRecord(record)
   log('Sending SMS', { ...data, to: obscurePhoneNumber(data.to) })
   await sendSms(data.to, data.contents, data.messageType)
@@ -15,7 +15,7 @@ export const sqsPayloadProcessorHandler: SQSHandler = async (event: SQSEvent): P
   log('Received payload', { ...event, body: undefined })
   for (const record of event.Records) {
     try {
-      await exports.processSingleMessage(record)
+      await processSingleMessage(record)
     } catch (error) {
       logError(error)
     }
