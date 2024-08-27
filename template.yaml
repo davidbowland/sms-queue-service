@@ -13,6 +13,9 @@ Parameters:
       - prod
       - test
     Description: Environment for deploy
+  PhoneNumber:
+    Type: String
+    Description: Phone number for sending text messages
 
 Mappings:
   EnvironmentMap:
@@ -49,7 +52,7 @@ Resources:
       Environment:
         Variables:
           PROJECT_ID: !Ref PinpointApplication
-          SMS_FROM: '+18449163034'
+          SMS_FROM: !Ref PhoneNumber
           SMS_REGION: us-east-1
       Events:
         SQSQueueEvent:
