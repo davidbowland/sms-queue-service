@@ -1,7 +1,8 @@
-import * as AWSXRay from 'aws-xray-sdk-core'
-import { log, logError, xrayCapture } from '@utils/logging'
-import { mocked } from 'jest-mock'
 import { PinpointClient } from '@aws-sdk/client-pinpoint'
+import * as AWSXRay from 'aws-xray-sdk-core'
+import { mocked } from 'jest-mock'
+
+import { log, logError, xrayCapture } from '@utils/logging'
 
 jest.mock('aws-xray-sdk-core')
 
@@ -12,28 +13,22 @@ describe('logging', () => {
   })
 
   describe('log', () => {
-    test.each(['Hello', 0, null, undefined, { a: 1, b: 2 }])(
-      'expect logFunc to have been called with message',
-      async (value) => {
-        const message = `Log message for value ${JSON.stringify(value)}`
-        await log(message)
+    it.each(['Hello', 0, null, undefined, { a: 1, b: 2 }])('should call logFunc with message', async (value) => {
+      const message = `Log message for value ${JSON.stringify(value)}`
+      await log(message)
 
-        expect(console.log).toHaveBeenCalledWith(message)
-      }
-    )
+      expect(console.log).toHaveBeenCalledWith(message)
+    })
   })
 
   describe('logError', () => {
-    test.each(['Hello', 0, null, undefined, { a: 1, b: 2 }])(
-      'expect logFunc to have been called with message',
-      async (value) => {
-        const message = `Error message for value ${JSON.stringify(value)}`
-        const error = new Error(message)
-        await logError(error)
+    it.each(['Hello', 0, null, undefined, { a: 1, b: 2 }])('should call logFunc with message', async (value) => {
+      const message = `Error message for value ${JSON.stringify(value)}`
+      const error = new Error(message)
+      await logError(error)
 
-        expect(console.error).toHaveBeenCalledWith(error)
-      }
-    )
+      expect(console.error).toHaveBeenCalledWith(error)
+    })
   })
 
   describe('xrayCapture', () => {
@@ -44,7 +39,7 @@ describe('logging', () => {
       mocked(AWSXRay).captureAWSv3Client.mockReturnValue(capturedPinpoint)
     })
 
-    test('expect AWSXRay.captureAWSv3Client when x-ray is enabled (not running locally)', () => {
+    it('should use AWSXRay.captureAWSv3Client when x-ray is enabled (not running locally)', () => {
       process.env.AWS_SAM_LOCAL = 'false'
       const result = xrayCapture(pinpoint)
 
@@ -52,7 +47,7 @@ describe('logging', () => {
       expect(result).toEqual(capturedPinpoint)
     })
 
-    test('expect same object when x-ray is disabled (running locally)', () => {
+    it('should return same object when x-ray is disabled (running locally)', () => {
       process.env.AWS_SAM_LOCAL = 'true'
       const result = xrayCapture(pinpoint)
 

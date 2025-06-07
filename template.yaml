@@ -45,7 +45,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Description: Processes queued messages to send sms messages.
-      Runtime: nodejs20.x
+      Runtime: nodejs22.x
       Architectures:
         - x86_64
       Handler: src/handlers/sqs-payload-processor.sqsPayloadProcessorHandler
@@ -60,7 +60,7 @@ Resources:
           Properties:
             BatchSize: 7
             Queue: !GetAtt SimpleQueue.Arn
-      MemorySize: 128
+      MemorySize: 1536
       Policies:
         # Give Lambda basic execution Permission
         - AWSLambdaBasicExecutionRole

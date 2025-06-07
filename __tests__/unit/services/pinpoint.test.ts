@@ -1,5 +1,5 @@
-import { sendSms } from '@services/pinpoint'
 import { smsMessage } from '../__mocks__'
+import { sendSms } from '@services/pinpoint'
 
 const mockSend = jest.fn()
 jest.mock('@aws-sdk/client-pinpoint', () => ({
@@ -14,7 +14,7 @@ jest.mock('@utils/logging', () => ({
 
 describe('Pinpoint', () => {
   describe('sendSms', () => {
-    test('expect data passed to sendMessages', async () => {
+    it('should pass data to sendMessages', async () => {
       await sendSms(smsMessage.to, smsMessage.contents)
 
       expect(mockSend).toHaveBeenCalledWith({
@@ -36,7 +36,7 @@ describe('Pinpoint', () => {
       })
     })
 
-    test('expect messageType passed to sendMessages', async () => {
+    it('should pass messageType to sendMessages', async () => {
       await sendSms(smsMessage.to, smsMessage.contents, 'PROMOTIONAL')
 
       expect(mockSend).toHaveBeenCalledWith({

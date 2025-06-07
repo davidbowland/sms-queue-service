@@ -9,7 +9,7 @@ const pinpoint = xrayCapture(new PinpointClient({ apiVersion: '2016-12-01', regi
 export const sendSms = async (
   to: string,
   message: string,
-  messageType?: MessageType
+  messageType?: MessageType,
 ): Promise<SendMessagesCommandOutput> => {
   const command = new SendMessagesCommand({
     ApplicationId: projectId,
