@@ -8,6 +8,8 @@ import { getDataFromRecord, obscurePhoneNumber } from '../utils/message-processi
 const processSingleMessage = async (record: SQSRecord): Promise<void> => {
   const data = getDataFromRecord(record)
   log('Sending SMS', { ...data, to: obscurePhoneNumber(data.to) })
+  // Pinpoint restricts SMS to 600 non-GSM characters.
+  // We have to assume that the message may contain non-GSM characters.
   const contents = data.contents.match(/.{1,600}/g) || []
   for (const content of contents) {
     await sendSms(data.to, content, data.messageType)
