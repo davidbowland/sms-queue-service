@@ -8,7 +8,10 @@ import { getDataFromRecord, obscurePhoneNumber } from '../utils/message-processi
 const processSingleMessage = async (record: SQSRecord): Promise<void> => {
   const data = getDataFromRecord(record)
   log('Sending SMS', { ...data, to: obscurePhoneNumber(data.to) })
-  await sendSms(data.to, data.contents, data.messageType)
+  const contents = data.contents.match(/.{1,600}/g) || []
+  for (const content of contents) {
+    await sendSms(data.to, content, data.messageType)
+  }
 }
 
 export const sqsPayloadProcessorHandler: SQSHandler = async (event: SQSEvent): Promise<void> => {
