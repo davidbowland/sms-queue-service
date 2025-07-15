@@ -2,7 +2,7 @@
   "name": "sms-queue-service",
   "author": "David Bowland",
   "description": "Sends SMS messages queued in SQS",
-  "version": "1.16.0",
+  "version": "1.17.0",
   "engines": {
     "node": "^22.0.0"
   },
