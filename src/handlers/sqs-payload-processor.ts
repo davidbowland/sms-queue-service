@@ -10,7 +10,7 @@ const processSingleMessage = async (record: SQSRecord): Promise<void> => {
   log('Sending SMS', { ...data, to: obscurePhoneNumber(data.to) })
   // Pinpoint restricts SMS to 600 non-GSM characters.
   // We have to assume that the message may contain non-GSM characters.
-  const contents = data.contents.match(/.{1,600}/g) || []
+  const contents = data.contents.match(/.{1,600}/gs) || []
   for (const content of contents) {
     await sendSms(data.to, content, data.messageType)
   }

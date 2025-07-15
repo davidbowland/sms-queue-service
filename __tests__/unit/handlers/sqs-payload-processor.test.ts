@@ -29,7 +29,7 @@ describe('sqs-payload-processor', () => {
     })
 
     it('should break long messages into chunks', async () => {
-      const longMessage = 'a'.repeat(1200)
+      const longMessage = 'a'.repeat(400) + '\n' + 'b'.repeat(400) + '\n' + 'c'.repeat(400)
       jest.mocked(messageProcessing.getDataFromRecord).mockReturnValueOnce({
         ...smsMessage,
         contents: longMessage,
@@ -45,7 +45,12 @@ describe('sqs-payload-processor', () => {
         expect.stringContaining(longMessage.slice(600, 1200)),
         undefined,
       )
-      expect(pinpoint.sendSms).toHaveBeenCalledTimes(2)
+      expect(pinpoint.sendSms).toHaveBeenCalledWith(
+        '+15551234567',
+        expect.stringContaining(longMessage.slice(1200)),
+        undefined,
+      )
+      expect(pinpoint.sendSms).toHaveBeenCalledTimes(3)
     })
 
     it('should not invoke sendSms if there are no contents', async () => {
