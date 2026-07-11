@@ -1,3 +1,5 @@
+import { logError } from './logging'
+
 export type CfnResponseStatus = 'FAILED' | 'SUCCESS'
 
 interface CfnCustomResourceEventLike {
@@ -22,5 +24,8 @@ export const sendCfnResponse = async (
     StackId: event.StackId,
     Status: status,
   })
-  await fetch(event.ResponseURL, { body, method: 'PUT' })
+  const response = await fetch(event.ResponseURL, { body, headers: { 'Content-Type': '' }, method: 'PUT' })
+  if (!response.ok) {
+    logError('Failed to send CloudFormation custom resource response', { status: response.status })
+  }
 }

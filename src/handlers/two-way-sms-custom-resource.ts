@@ -18,12 +18,16 @@ const applyTwoWaySms = async (event: CloudFormationCustomResourceEvent): Promise
 }
 
 export const twoWaySmsCustomResourceHandler: CloudFormationCustomResourceHandler = async (event) => {
-  log('Received two-way SMS custom resource event', { RequestType: event.RequestType })
   try {
+    log('Received two-way SMS custom resource event', { RequestType: event.RequestType })
     const physicalResourceId = await applyTwoWaySms(event)
     await sendCfnResponse(event, 'SUCCESS', undefined, physicalResourceId)
   } catch (error) {
     logError(error)
-    await sendCfnResponse(event, 'FAILED', String(error))
+    try {
+      await sendCfnResponse(event, 'FAILED', String(error))
+    } catch (responseError) {
+      logError('Failed to send FAILED response to CloudFormation', responseError)
+    }
   }
 }

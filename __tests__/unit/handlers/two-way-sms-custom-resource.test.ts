@@ -73,5 +73,17 @@ describe('two-way-sms-custom-resource', () => {
       await expect(twoWaySmsCustomResourceHandler(event, undefined as any, undefined as any)).resolves.toBeUndefined()
       expect(cfnResponse.sendCfnResponse).toHaveBeenCalledWith(event, 'FAILED', 'Error: boom')
     })
+
+    it('should not throw when the failure-path sendCfnResponse call itself rejects', async () => {
+      jest.mocked(smsVoice).findPhoneNumberId.mockRejectedValueOnce(new Error('boom'))
+      jest.mocked(cfnResponse).sendCfnResponse.mockRejectedValueOnce(new Error('response boom'))
+      const event = { ...baseEvent, RequestType: 'Create' } as any
+
+      await expect(twoWaySmsCustomResourceHandler(event, undefined as any, undefined as any)).resolves.toBeUndefined()
+      expect(logging.logError).toHaveBeenCalledWith(
+        'Failed to send FAILED response to CloudFormation',
+        expect.any(Error),
+      )
+    })
   })
 })
