@@ -119,3 +119,164 @@ Resources:
           Value: 'dbowland'
         - Key: 'environment'
           Value: !Ref Environment
+
+  SmsInboundRawTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Tags:
+        - Key: 'created-by'
+          Value: 'sms-queue-service'
+        - Key: 'created-for'
+          Value: 'dbowland'
+        - Key: 'environment'
+          Value: !Ref Environment
+
+  SmsInboundRawTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowEndUserMessagingSmsPublish
+            Effect: Allow
+            Principal:
+              Service: sms-voice.amazonaws.com
+            Action: 'sns:Publish'
+            Resource: !Ref SmsInboundRawTopic
+            Condition:
+              StringEquals:
+                'AWS:SourceAccount': !Ref AWS::AccountId
+      Topics:
+        - !Ref SmsInboundRawTopic
+
+  SmsInboundRoutedTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Tags:
+        - Key: 'created-by'
+          Value: 'sms-queue-service'
+        - Key: 'created-for'
+          Value: 'dbowland'
+        - Key: 'environment'
+          Value: !Ref Environment
+
+  RegistrationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub
+        - '${Project}-registrations'
+        - Project: !FindInMap [EnvironmentMap, !Ref Environment, project]
+      AttributeDefinitions:
+        - AttributeName: phoneNumber
+          AttributeType: S
+        - AttributeName: ruleKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: phoneNumber
+          KeyType: HASH
+        - AttributeName: ruleKey
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: 'created-by'
+          Value: 'sms-queue-service'
+        - Key: 'created-for'
+          Value: 'dbowland'
+        - Key: 'environment'
+          Value: !Ref Environment
+
+  RouterDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 1209600 # 14 days
+      Tags:
+        - Key: 'created-by'
+          Value: 'sms-queue-service'
+        - Key: 'created-for'
+          Value: 'dbowland'
+        - Key: 'environment'
+          Value: !Ref Environment
+
+  RouterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Routes inbound SMS messages to the correct consumer based on registered rules.
+      Runtime: nodejs24.x
+      Architectures:
+        - x86_64
+      Handler: src/handlers/sms-inbound-router.smsInboundRouterHandler
+      Environment:
+        Variables:
+          REGISTRATIONS_TABLE_NAME: !Ref RegistrationsTable
+          ROUTED_TOPIC_ARN: !Ref SmsInboundRoutedTopic
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref SmsInboundRawTopic
+      MemorySize: 256
+      Policies:
+        # Give Lambda basic execution Permission
+        - AWSLambdaBasicExecutionRole
+        # Read access to the registrations table
+        - DynamoDBReadPolicy:
+            TableName: !Ref RegistrationsTable
+        # Publish routed messages
+        - Version: 2012-10-17
+          Statement:
+            - Action:
+                - 'sns:Publish'
+              Effect: Allow
+              Resource: !Ref SmsInboundRoutedTopic
+        # Send failed invocations to the dead-letter queue
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt RouterDeadLetterQueue.QueueName
+      Tags:
+        'created-by': 'sms-queue-service'
+        'created-for': 'dbowland'
+        'environment': !Ref Environment
+      Timeout: 30
+      Tracing: Active
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: 'es2020'
+        Sourcemap: true
+        EntryPoints:
+          - src/handlers/sms-inbound-router.ts
+
+  RouterFunctionEventInvokeConfig:
+    Type: AWS::Lambda::EventInvokeConfig
+    Properties:
+      FunctionName: !Ref RouterFunction
+      Qualifier: '$LATEST'
+      DestinationConfig:
+        OnFailure:
+          Destination: !GetAtt RouterDeadLetterQueue.Arn
+
+  RouterLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    DependsOn: [RouterFunction]
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${RouterFunction}
+      RetentionInDays: 30
+      Tags:
+        - Key: 'created-by'
+          Value: 'sms-queue-service'
+        - Key: 'created-for'
+          Value: 'dbowland'
+        - Key: 'environment'
+          Value: !Ref Environment
+
+Outputs:
+  SmsInboundRoutedTopicArn:
+    Description: SNS topic ARN consumer projects subscribe to for routed inbound SMS messages.
+    Value: !Ref SmsInboundRoutedTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-SmsInboundRoutedTopicArn'
+  RegistrationsTableName:
+    Description: DynamoDB table name for phone number registrations, written by sms-queue-api.
+    Value: !Ref RegistrationsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-RegistrationsTableName'
