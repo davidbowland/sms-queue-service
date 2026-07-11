@@ -74,6 +74,25 @@ describe('two-way-sms-custom-resource', () => {
       expect(cfnResponse.sendCfnResponse).toHaveBeenCalledWith(event, 'FAILED', 'Error: boom')
     })
 
+    it('should send SUCCESS without calling setTwoWaySms when the phone number is not found on delete', async () => {
+      jest.mocked(smsVoice).findPhoneNumberId.mockRejectedValueOnce(new Error('not found'))
+      const event = { ...baseEvent, PhysicalResourceId: 'phone-abc123', RequestType: 'Delete' } as any
+
+      await expect(twoWaySmsCustomResourceHandler(event, undefined as any, undefined as any)).resolves.toBeUndefined()
+
+      expect(smsVoice.setTwoWaySms).not.toHaveBeenCalled()
+      expect(cfnResponse.sendCfnResponse).toHaveBeenCalledWith(event, 'SUCCESS', undefined, 'phone-abc123')
+    })
+
+    it('should fall back to the phone number as the physical resource id when none was provided on delete', async () => {
+      jest.mocked(smsVoice).findPhoneNumberId.mockRejectedValueOnce(new Error('not found'))
+      const event = { ...baseEvent, RequestType: 'Delete' } as any
+
+      await expect(twoWaySmsCustomResourceHandler(event, undefined as any, undefined as any)).resolves.toBeUndefined()
+
+      expect(cfnResponse.sendCfnResponse).toHaveBeenCalledWith(event, 'SUCCESS', undefined, '+15551234567')
+    })
+
     it('should not throw when the failure-path sendCfnResponse call itself rejects', async () => {
       jest.mocked(smsVoice).findPhoneNumberId.mockRejectedValueOnce(new Error('boom'))
       jest.mocked(cfnResponse).sendCfnResponse.mockRejectedValueOnce(new Error('response boom'))

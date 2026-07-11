@@ -31,6 +31,30 @@ describe('sms-voice', () => {
 
       await expect(findPhoneNumberId('+15551234567')).rejects.toThrow('No phone number found matching +15551234567')
     })
+
+    it('should throw when the response has no PhoneNumbers field', async () => {
+      mockSend.mockResolvedValueOnce({})
+
+      await expect(findPhoneNumberId('+15551234567')).rejects.toThrow('No phone number found matching +15551234567')
+    })
+
+    it('should paginate through all pages before searching for a match', async () => {
+      mockSend
+        .mockResolvedValueOnce({
+          NextToken: 'next-page-token',
+          PhoneNumbers: [{ PhoneNumber: '+19998887777', PhoneNumberId: 'phone-other' }],
+        })
+        .mockResolvedValueOnce({
+          PhoneNumbers: [{ PhoneNumber: '+15551234567', PhoneNumberId: 'phone-abc123' }],
+        })
+
+      const result = await findPhoneNumberId('+15551234567')
+
+      expect(result).toEqual('phone-abc123')
+      expect(mockSend).toHaveBeenCalledTimes(2)
+      expect(mockSend).toHaveBeenNthCalledWith(1, { NextToken: undefined })
+      expect(mockSend).toHaveBeenNthCalledWith(2, { NextToken: 'next-page-token' })
+    })
   })
 
   describe('setTwoWaySms', () => {

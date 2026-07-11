@@ -7,7 +7,10 @@ export const extractCandidateKeyword = (messageBody: string): string | undefined
   return firstWord ? firstWord.toUpperCase() : undefined
 }
 
-const stripKeyword = (messageBody: string, keyword: string): string => messageBody.trim().slice(keyword.length).trim()
+// Strip the leading non-whitespace token from the original string (not a length-based slice off
+// the uppercased keyword) since some Unicode characters change length when uppercased (e.g. German
+// "ß" -> "SS"), which would make a length-based slice off-by-one-or-more against the original body.
+const stripKeyword = (messageBody: string): string => messageBody.trim().replace(/^\S+/, '').trim()
 
 export const matchRegistration = (registrations: Registration[], messageBody: string): MatchResult | undefined => {
   const candidateKeyword = extractCandidateKeyword(messageBody)
@@ -15,7 +18,7 @@ export const matchRegistration = (registrations: Registration[], messageBody: st
     const keywordMatch = registrations.find((registration) => registration.ruleKey === `KEYWORD#${candidateKeyword}`)
     if (keywordMatch) {
       return {
-        body: stripKeyword(messageBody, candidateKeyword),
+        body: stripKeyword(messageBody),
         consumerId: keywordMatch.consumerId,
         keyword: candidateKeyword,
         matchType: 'KEYWORD',

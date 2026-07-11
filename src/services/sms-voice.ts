@@ -9,8 +9,15 @@ import { xrayCapture } from '../utils/logging'
 const smsVoice = xrayCapture(new PinpointSMSVoiceV2Client({}))
 
 export const findPhoneNumberId = async (phoneNumber: string): Promise<string> => {
-  const result = await smsVoice.send(new DescribePhoneNumbersCommand({}))
-  const match = (result.PhoneNumbers ?? []).find((entry: { PhoneNumber?: string }) => entry.PhoneNumber === phoneNumber)
+  const phoneNumbers: { PhoneNumber?: string; PhoneNumberId?: string }[] = []
+  let nextToken: string | undefined
+  do {
+    const result = await smsVoice.send(new DescribePhoneNumbersCommand({ NextToken: nextToken }))
+    phoneNumbers.push(...(result.PhoneNumbers ?? []))
+    nextToken = result.NextToken
+  } while (nextToken)
+
+  const match = phoneNumbers.find((entry) => entry.PhoneNumber === phoneNumber)
   if (!match?.PhoneNumberId) {
     throw new Error(`No phone number found matching ${phoneNumber}`)
   }

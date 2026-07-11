@@ -26,6 +26,8 @@ const processSingleRecord = async (message: PinpointInboundSmsMessage): Promise<
 
 export const smsInboundRouterHandler: SNSHandler = async (event: SNSEvent): Promise<void> => {
   log('Received inbound SMS event', { ...event, Records: undefined })
+  // Deliberately no per-record try/catch: errors must propagate so SNS's built-in Lambda retry
+  // applies, and exhausted retries land in the configured DLQ instead of being silently dropped.
   for (const record of event.Records) {
     const message: PinpointInboundSmsMessage = JSON.parse(record.Sns.Message)
     await processSingleRecord(message)
