@@ -77,8 +77,8 @@ Trigger: SNS subscription to `sms-inbound-raw`.
 
 ## New/Changed Infrastructure (`template.yaml`)
 
-- `AWS::Pinpoint::SMSChannel` (existing `PinpointSms` resource): enable two-way SMS pointed at the new raw inbound SNS topic (`TwoWayEnabled: true`, `TwoWayChannelArn`).
-- New `SmsInboundRawTopic` (SNS topic) with a resource policy allowing Pinpoint to publish.
+- The existing `PinpointSms` (`AWS::Pinpoint::SMSChannel`) resource is unchanged — that resource type has no two-way-SMS properties. Two-way SMS is instead a property of the phone number itself under the separate "AWS End User Messaging SMS" service (`UpdatePhoneNumber` API: `TwoWayEnabled`/`TwoWayChannelArn`). Since the phone number isn't a CloudFormation-managed resource in this template (it arrives as a plain string `Parameter`, provisioned manually), a small custom resource (`TwoWaySmsFunction`/`TwoWaySmsCustomResource`) calls that API imperatively at deploy time to enable it, pointed at the new raw inbound SNS topic. On stack deletion it disables two-way SMS on that number.
+- New `SmsInboundRawTopic` (SNS topic) with a resource policy allowing the `sms-voice.amazonaws.com` service principal (AWS End User Messaging SMS) to publish, matching the account's existing "Use SNS topic policies" two-way channel role configuration.
 - New `SmsInboundRoutedTopic` (SNS topic).
 - New `RegistrationsTable` (DynamoDB, explicit `TableName`, PK `phoneNumber`, SK `ruleKey`).
 - New `RouterFunction` (Lambda): SNS event source on `SmsInboundRawTopic`; read access (`Query`) scoped to `RegistrationsTable` ARN only; publish access scoped to `SmsInboundRoutedTopic` ARN only; `OnFailure` destination DLQ.
