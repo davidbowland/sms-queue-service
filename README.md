@@ -1,6 +1,6 @@
 # Lambdas for SMS Queue Service
 
-Lambdas for sms queue service, which processes and sends the outbound SMS queue.
+Lambdas for sms queue service, which processes and sends the outbound SMS queue, and routes inbound SMS replies to the registered consumer project.
 
 ## Setup
 
@@ -69,6 +69,12 @@ npm run lint
 ### Deploying to Production
 
 When a pull request is merged into `master`, the lambda code is transpiled to commonjs and then deployed. Feature branches are also deployed but are given unique resources.
+
+## Inbound SMS Routing
+
+In addition to sending outbound messages, this service receives inbound SMS via AWS Pinpoint two-way SMS and routes each message to the consumer project registered for the sender's phone number (by keyword or default). See `docs/superpowers/specs/2026-07-11-inbound-sms-routing-design.md` for the full design, and `SMS-CONSUMER-INTEGRATION.md` for how another project registers a phone number and subscribes to routed messages.
+
+Registrations are managed via `sms-queue-api` (`POST`/`DELETE /v1/registrations`), not by this service.
 
 ## Additional Documentation
 
