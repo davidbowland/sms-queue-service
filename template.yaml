@@ -16,10 +16,10 @@ Parameters:
   PhoneNumber:
     Type: String
     Description: >-
-      Phone number for sending text messages. If two-way SMS is enabled, each deployed environment
-      (e.g. prod and test) MUST use its own distinct phone number -- two stacks pointed at the same
-      number will each repoint TwoWayChannelArn at their own topic (last deploy wins), and deleting
-      either stack disables two-way SMS for both.
+      Phone number for sending text messages. Two-way SMS is only enabled by the prod
+      (Environment=prod) stack's TwoWaySmsCustomResource -- the test stack does not touch
+      two-way SMS settings on this number, so the same number can safely be reused for both
+      environments' outbound sending.
 
 Mappings:
   EnvironmentMap:
@@ -27,6 +27,9 @@ Mappings:
       project: sms-queue-service
     test:
       project: sms-queue-service-test
+
+Conditions:
+  IsProd: !Equals [!Ref Environment, prod]
 
 Resources:
   SimpleQueue:
@@ -275,6 +278,7 @@ Resources:
 
   TwoWaySmsFunction:
     Type: AWS::Serverless::Function
+    Condition: IsProd
     Properties:
       Description: CloudFormation custom resource that enables two-way SMS on the existing origination phone number.
       Runtime: nodejs24.x
@@ -310,6 +314,7 @@ Resources:
 
   TwoWaySmsCustomResource:
     Type: Custom::TwoWaySms
+    Condition: IsProd
     DependsOn: [SmsInboundRawTopicPolicy]
     Properties:
       ServiceToken: !GetAtt TwoWaySmsFunction.Arn
