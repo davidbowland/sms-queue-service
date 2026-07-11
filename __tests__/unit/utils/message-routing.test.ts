@@ -110,5 +110,11 @@ describe('message-routing', () => {
 
       expect(result.keyword).toBeUndefined()
     })
+
+    it('should default the clock to the current time when now is not injected', () => {
+      const result = buildRoutedMessage(pinpointInboundMessage, match)
+
+      expect(result.receivedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
+    })
   })
 })
