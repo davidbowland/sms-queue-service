@@ -269,6 +269,49 @@ Resources:
         - Key: 'environment'
           Value: !Ref Environment
 
+  TwoWaySmsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: CloudFormation custom resource that enables two-way SMS on the existing origination phone number.
+      Runtime: nodejs24.x
+      Architectures:
+        - x86_64
+      Handler: src/handlers/two-way-sms-custom-resource.twoWaySmsCustomResourceHandler
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Version: 2012-10-17
+          Statement:
+            # DescribePhoneNumbers is a list operation with no per-resource ARN to scope to
+            - Action:
+                - 'sms-voice:DescribePhoneNumbers'
+              Effect: Allow
+              Resource: '*'
+            - Action:
+                - 'sms-voice:UpdatePhoneNumber'
+              Effect: Allow
+              Resource: !Sub 'arn:aws:sms-voice:${AWS::Region}:${AWS::AccountId}:phone-number/*'
+      Tags:
+        'created-by': 'sms-queue-service'
+        'created-for': 'dbowland'
+        'environment': !Ref Environment
+      Timeout: 30
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: 'es2020'
+        Sourcemap: true
+        EntryPoints:
+          - src/handlers/two-way-sms-custom-resource.ts
+
+  TwoWaySmsCustomResource:
+    Type: Custom::TwoWaySms
+    DependsOn: [SmsInboundRawTopicPolicy]
+    Properties:
+      ServiceToken: !GetAtt TwoWaySmsFunction.Arn
+      PhoneNumber: !Ref PhoneNumber
+      TwoWayChannelArn: !Ref SmsInboundRawTopic
+
 Outputs:
   SmsInboundRoutedTopicArn:
     Description: SNS topic ARN consumer projects subscribe to for routed inbound SMS messages.
