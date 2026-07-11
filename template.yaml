@@ -15,7 +15,11 @@ Parameters:
     Description: Environment for deploy
   PhoneNumber:
     Type: String
-    Description: Phone number for sending text messages
+    Description: >-
+      Phone number for sending text messages. If two-way SMS is enabled, each deployed environment
+      (e.g. prod and test) MUST use its own distinct phone number -- two stacks pointed at the same
+      number will each repoint TwoWayChannelArn at their own topic (last deploy wins), and deleting
+      either stack disables two-way SMS for both.
 
 Mappings:
   EnvironmentMap:

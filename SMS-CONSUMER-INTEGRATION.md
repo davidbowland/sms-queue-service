@@ -64,22 +64,48 @@ There is no "list my registrations" endpoint currently. Track what you've regist
 
 ## Step 2: Subscribe to inbound messages
 
-`sms-queue-service` publishes matched inbound messages to an SNS topic named `sms-inbound-routed`. In your own project's SAM/CloudFormation template, add a subscription with a **filter policy** on the `consumerId` message attribute so you only receive messages addressed to you:
+`sms-queue-service` publishes matched inbound messages to an SNS topic whose **logical name** is `SmsInboundRoutedTopic`. This topic does NOT have a fixed physical name (CloudFormation generates one) — instead, `sms-queue-service`'s template exports the topic's ARN via a CloudFormation cross-stack export named `${AWS::StackName}-SmsInboundRoutedTopicArn`. The stack is named `sms-queue-service` in prod and `sms-queue-service-test` in the test environment, so the export names you'll import are:
+
+- Prod: `sms-queue-service-SmsInboundRoutedTopicArn`
+- Test: `sms-queue-service-test-SmsInboundRoutedTopicArn`
+
+In your own project's SAM/CloudFormation template, add a subscription with a **filter policy** on the `consumerId` message attribute so you only receive messages addressed to you:
 
 ```yaml
 InboundSmsSubscription:
   Type: AWS::SNS::Subscription
   Properties:
-    TopicArn: <sms-inbound-routed topic ARN — ask David for the current value, or find it in sms-queue-service's stack outputs>
+    TopicArn: !ImportValue 'sms-queue-service-SmsInboundRoutedTopicArn' # or the -test export, for your test environment
     Protocol: sqs # or lambda, your choice
     Endpoint: !GetAtt YourQueue.Arn
+    RawMessageDelivery: 'true' # without this, SNS wraps the payload in an envelope and your queue's
+    # message body won't match the JSON shape documented below until you unwrap `.Message` yourself
     FilterPolicy:
       consumerId:
         - 'garage-app' # your consumerId
     FilterPolicyScope: MessageAttributes
 ```
 
-The topic ARN isn't fixed/known ahead of time — get the current value from David or from `sms-queue-service`'s deployed stack outputs before wiring this up.
+If you're subscribing an SQS queue, SNS also needs permission to deliver to it — add a queue policy granting the topic `sqs:SendMessage`:
+
+```yaml
+YourQueuePolicy:
+  Type: AWS::SQS::QueuePolicy
+  Properties:
+    Queues:
+      - !Ref YourQueue
+    PolicyDocument:
+      Version: 2012-10-17
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service: sns.amazonaws.com
+          Action: 'sqs:SendMessage'
+          Resource: !GetAtt YourQueue.Arn
+          Condition:
+            ArnEquals:
+              'aws:SourceArn': !ImportValue 'sms-queue-service-SmsInboundRoutedTopicArn'
+```
 
 **Message payload you'll receive** (JSON, as the SNS message body):
 
@@ -98,6 +124,9 @@ The topic ARN isn't fixed/known ahead of time — get the current value from Dav
 - `body` has the matched keyword already stripped (for `matchType: "KEYWORD"`) — you don't need to re-parse it out.
 - `keyword` is only present when `matchType` is `"KEYWORD"`.
 - `phoneNumber` is who sent the message — use this to look up which of your users it belongs to.
+- A keyword-only message (e.g. someone texts just `GARAGE` with nothing after it) produces an empty-string `body` with `matchType: "KEYWORD"` — this is not an error, just something worth handling explicitly.
+
+Inbound delivery is **at-least-once**: SNS retry and Lambda retry can both redeliver the same message. If the action you take isn't naturally idempotent (e.g. "open the gate"), dedupe on `inboundMessageId` before acting on it.
 
 ## Step 3: Sending replies
 

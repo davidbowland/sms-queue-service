@@ -63,7 +63,7 @@ Trigger: SNS subscription to `sms-inbound-raw`.
 3. `Query` registrations table where `phoneNumber = originationNumber`.
 4. Resolve match:
    - Row with `ruleKey = KEYWORD#<candidateKeyword>` exists → `consumerId` = that row's value; forwarded body = `messageBody` with the matched token and following whitespace stripped, then trimmed.
-   - Else row with `ruleKey = DEFAULT` exists → `consumerId` = that row's value; forwarded body = `messageBody` unchanged.
+   - Else row with `ruleKey = DEFAULT` exists → `consumerId` = that row's value; forwarded body = `messageBody` trimmed.
    - Else → structured log (`info`/`warn`, includes number + candidate keyword, no PII beyond the phone number itself) and drop. No publish. Not treated as an error.
 5. On a match, publish to `sms-inbound-routed`:
    - `MessageAttributes`: `{ consumerId: { DataType: 'String', StringValue: <consumerId> } }`
@@ -78,6 +78,7 @@ Trigger: SNS subscription to `sms-inbound-raw`.
 ## New/Changed Infrastructure (`template.yaml`)
 
 - The existing `PinpointSms` (`AWS::Pinpoint::SMSChannel`) resource is unchanged — that resource type has no two-way-SMS properties. Two-way SMS is instead a property of the phone number itself under the separate "AWS End User Messaging SMS" service (`UpdatePhoneNumber` API: `TwoWayEnabled`/`TwoWayChannelArn`). Since the phone number isn't a CloudFormation-managed resource in this template (it arrives as a plain string `Parameter`, provisioned manually), a small custom resource (`TwoWaySmsFunction`/`TwoWaySmsCustomResource`) calls that API imperatively at deploy time to enable it, pointed at the new raw inbound SNS topic. On stack deletion it disables two-way SMS on that number.
+  > **Warning:** each deployed environment needs its own phone number if two-way SMS is enabled — two stacks pointed at the same number will fight over `TwoWayChannelArn` (last deploy wins), and deleting either stack disables two-way SMS for both.
 - New `SmsInboundRawTopic` (SNS topic) with a resource policy allowing the `sms-voice.amazonaws.com` service principal (AWS End User Messaging SMS) to publish, matching the account's existing "Use SNS topic policies" two-way channel role configuration.
 - New `SmsInboundRoutedTopic` (SNS topic).
 - New `RegistrationsTable` (DynamoDB, explicit `TableName`, PK `phoneNumber`, SK `ruleKey`).
